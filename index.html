@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paramore Live - Digital Concert Experience</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* ── Stage Lighting ── */
+        .stage-lights {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .stage-lights.active {
+            opacity: 1;
+        }
+
+        .light-beam {
+            position: absolute;
+            top: -10%;
+            width: 120px;
+            height: 130%;
+            background: linear-gradient(180deg, rgba(255, 102, 0, 0.4) 0%, transparent 70%);
+            filter: blur(30px);
+            transform-origin: top center;
+        }
+
+        .light-beam:nth-child(1) { left: 5%; animation: lightSweep1 3s ease-in-out infinite; }
+        .light-beam:nth-child(2) { left: 25%; background: linear-gradient(180deg, rgba(255, 50, 100, 0.4) 0%, transparent 70%); animation: lightSweep2 4s ease-in-out infinite; }
+        .light-beam:nth-child(3) { left: 50%; background: linear-gradient(180deg, rgba(255, 200, 0, 0.35) 0%, transparent 70%); animation: lightSweep3 3.5s ease-in-out infinite; }
+        .light-beam:nth-child(4) { left: 75%; background: linear-gradient(180deg, rgba(200, 50, 255, 0.4) 0%, transparent 70%); animation: lightSweep1 4.5s ease-in-out infinite reverse; }
+        .light-beam:nth-child(5) { left: 90%; animation: lightSweep2 3s ease-in-out infinite reverse; }
+
+        @keyframes lightSweep1 {
+            0%, 100% { transform: rotate(-15deg); opacity: 0.7; }
+            50% { transform: rotate(15deg); opacity: 1; }
+        }
+        @keyframes lightSweep2 {
+            0%, 100% { transform: rotate(10deg); opacity: 0.8; }
+            50% { transform: rotate(-20deg); opacity: 0.6; }
+        }
+        @keyframes lightSweep3 {
+            0%, 100% { transform: rotate(-5deg); opacity: 1; }
+            50% { transform: rotate(10deg); opacity: 0.5; }
+        }
+
+        /* ── Fog / Haze ── */
+        .fog {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 250px;
+            pointer-events: none;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 1s;
+            background: linear-gradient(0deg, rgba(255,255,255,0.06) 0%, transparent 100%);
+        }
+        .fog.active { opacity: 1; animation: fogDrift 8s linear infinite; }
+
+        @keyframes fogDrift {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* ── Header ── */
+        .header {
+            text-align: center;
+            padding: 30px 20px 10px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-family: 'Anton', sans-serif;
+            font-size: clamp(2.5rem, 7vw, 5rem);
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            background: linear-gradient(135deg, #ff6600, #ff3366, #ffcc00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
+            position: relative;
+        }
+
+        .header .subtitle {
+            font-size: 0.95rem;
+            color: #aaa;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .tour-badge {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 4px 18px;
+            border: 1px solid #ff6600;
+            color: #ff6600;
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            border-radius: 20px;
+        }
+
+        /* ── Stage ── */
+        .stage-container {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            margin: 20px auto;
+            z-index: 5;
+        }
+
+        .stage {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(180deg, #111 0%, #1a1a1a 60%, #222 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #333;
+            box-shadow: 0 0 60px rgba(255, 102, 0, 0.1), inset 0 0 80px rgba(0,0,0,0.5);
+        }
+
+        /* Stage floor */
+        .stage::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            background: linear-gradient(180deg, transparent, rgba(40, 35, 30, 0.8));
+        }
+
+        /* ── Band Members (SVG-based) ── */
+        .band {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            height: 320px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 30px;
+            padding: 0 30px;
+        }
+
+        .member {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: filter 0.3s;
+        }
+
+        .member .name-tag {
+            font-size: 0.65rem;
+            color: #888;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        /* ── SVG Member Styling ── */
+        .member svg {
+            filter: drop-shadow(0 4px 20px rgba(0,0,0,0.5));
+        }
+
+        /* ── Animations for playing state ── */
+        .playing .member-hayley { animation: hayleyBounce 0.5s ease-in-out infinite; }
+        .playing .member-taylor { animation: taylorRock 0.8s ease-in-out infinite; }
+        .playing .member-zac { animation: zacDrum 0.25s ease-in-out infinite; }
+
+        .paused .member svg,
+        .stopped .member svg {
+            animation: none !important;
+        }
+        .paused .member-hayley,
+        .paused .member-taylor,
+        .paused .member-zac,
+        .stopped .member-hayley,
+        .stopped .member-taylor,
+        .stopped .member-zac {
+            animation: none !important;
+        }
+
+        @keyframes hayleyBounce {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-18px) rotate(-3deg); }
+            50% { transform: translateY(-5px) rotate(2deg); }
+            75% { transform: translateY(-22px) rotate(-2deg); }
+        }
+
+        @keyframes taylorRock {
+            0%, 100% { transform: rotate(0deg) translateX(0); }
+            25% { transform: rotate(-4deg) translateX(-4px); }
+            75% { transform: rotate(4deg) translateX(4px); }
+        }
+
+        @keyframes zacDrum {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        /* ── Crowd ── */
+        .crowd {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            z-index: 3;
+        }
+
+        .crowd-hand {
+            position: absolute;
+            bottom: 0;
+            width: 8px;
+            background: #222;
+            border-radius: 4px 4px 0 0;
+            transform-origin: bottom center;
+        }
+
+        .playing .crowd-hand {
+            animation: crowdWave 1s ease-in-out infinite;
+        }
+
+        @keyframes crowdWave {
+            0%, 100% { transform: rotate(-15deg) scaleY(1); }
+            50% { transform: rotate(15deg) scaleY(1.1); }
+        }
+
+        /* ── Strobe Flash ── */
+        .strobe {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        .playing .strobe {
+            animation: strobeFlash 4s ease-in-out infinite;
+        }
+
+        @keyframes strobeFlash {
+            0%, 94%, 100% { opacity: 0; }
+            95% { opacity: 0.15; }
+            96% { opacity: 0; }
+            97% { opacity: 0.1; }
+            98% { opacity: 0; }
+        }
+
+        /* ── Controls ── */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 20px auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            border: 2px solid #444;
+            background: rgba(255,255,255,0.04);
+            color: #ccc;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .btn:hover {
+            border-color: #ff6600;
+            color: #fff;
+            background: rgba(255, 102, 0, 0.1);
+            box-shadow: 0 0 20px rgba(255, 102, 0, 0.15);
+        }
+
+        .btn.active {
+            border-color: #ff6600;
+            background: linear-gradient(135deg, rgba(255,102,0,0.2), rgba(255,51,102,0.2));
+            color: #fff;
+            box-shadow: 0 0 30px rgba(255, 102, 0, 0.2);
+        }
+
+        .btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        /* ── Now Playing Bar ── */
+        .now-playing {
+            text-align: center;
+            padding: 8px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .now-playing .status {
+            font-size: 0.7rem;
+            color: #666;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .now-playing .status.live {
+            color: #ff6600;
+        }
+
+        .now-playing .status.live::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: #ff3300;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* ── Equalizer Bars ── */
+        .eq-bars {
+            display: flex;
+            gap: 3px;
+            justify-content: center;
+            margin: 8px 0;
+            height: 24px;
+            align-items: flex-end;
+        }
+
+        .eq-bar {
+            width: 4px;
+            background: linear-gradient(180deg, #ff6600, #ff3366);
+            border-radius: 2px;
+            height: 4px;
+            transition: height 0.1s;
+        }
+
+        .playing .eq-bar:nth-child(1) { animation: eqBounce 0.45s ease-in-out infinite; }
+        .playing .eq-bar:nth-child(2) { animation: eqBounce 0.55s ease-in-out infinite 0.1s; }
+        .playing .eq-bar:nth-child(3) { animation: eqBounce 0.4s ease-in-out infinite 0.05s; }
+        .playing .eq-bar:nth-child(4) { animation: eqBounce 0.6s ease-in-out infinite 0.15s; }
+        .playing .eq-bar:nth-child(5) { animation: eqBounce 0.35s ease-in-out infinite 0.08s; }
+        .playing .eq-bar:nth-child(6) { animation: eqBounce 0.5s ease-in-out infinite 0.12s; }
+        .playing .eq-bar:nth-child(7) { animation: eqBounce 0.42s ease-in-out infinite 0.03s; }
+
+        @keyframes eqBounce {
+            0%, 100% { height: 4px; }
+            50% { height: 22px; }
+        }
+
+        /* ── Lyrics Section ── */
+        .lyrics-section {
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .lyrics-section h2 {
+            font-family: 'Anton', sans-serif;
+            font-size: 1.4rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #ff6600;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .prompt-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .prompt-area input {
+            flex: 1;
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid #333;
+            border-radius: 50px;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .prompt-area input::placeholder {
+            color: #555;
+        }
+
+        .prompt-area input:focus {
+            border-color: #ff6600;
+        }
+
+        .prompt-area button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #ff6600, #ff3366);
+            border: none;
+            border-radius: 50px;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.3s;
+            white-space: nowrap;
+        }
+
+        .prompt-area button:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 25px rgba(255, 102, 0, 0.4);
+        }
+
+        .prompt-area button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .lyrics-display {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid #222;
+            border-radius: 16px;
+            padding: 30px;
+            min-height: 200px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lyrics-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #ff6600, #ff3366, #ffcc00, #ff6600);
+            background-size: 200% 100%;
+            animation: gradientSlide 3s linear infinite;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .lyrics-display.generating::before {
+            opacity: 1;
+        }
+
+        @keyframes gradientSlide {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+
+        .lyrics-placeholder {
+            text-align: center;
+            color: #444;
+            font-style: italic;
+            padding: 40px 0;
+        }
+
+        .lyrics-content {
+            line-height: 2;
+            font-size: 1.05rem;
+        }
+
+        .lyrics-content .verse {
+            margin-bottom: 20px;
+        }
+
+        .lyrics-content .verse-label {
+            font-size: 0.65rem;
+            color: #ff6600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .lyrics-content .line {
+            color: #ccc;
+            opacity: 0;
+            transform: translateY(8px);
+            animation: lineReveal 0.4s forwards;
+        }
+
+        @keyframes lineReveal {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .lyrics-content .chorus-line {
+            color: #ff6600;
+            font-weight: 700;
+        }
+
+        .song-title-display {
+            text-align: center;
+            font-family: 'Anton', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #ff6600, #ffcc00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ── Confetti / Particles ── */
+        .particles-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 3;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            opacity: 0;
+        }
+
+        .playing .particle {
+            animation: particleFall 3s linear infinite;
+        }
+
+        @keyframes particleFall {
+            0% { opacity: 0; transform: translateY(-20px) rotate(0deg); }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.3; }
+            100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+        }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: #333;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            .stage { height: 300px; }
+            .band { gap: 12px; padding: 0 12px; }
+            .controls { gap: 8px; }
+            .btn { padding: 10px 16px; font-size: 0.75rem; }
+            .btn span.btn-label { display: none; }
+            .prompt-area { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Stage Lighting -->
+    <div class="stage-lights" id="stageLights">
+        <div class="light-beam"></div>
+        <div class="light-beam"></div>
+        <div class="light-beam"></div>
+        <div class="light-beam"></div>
+        <div class="light-beam"></div>
+    </div>
+
+    <!-- Fog -->
+    <div class="fog" id="fog"></div>
+
+    <!-- Particles -->
+    <div class="particles-container" id="particles"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <h1>Paramore</h1>
+        <p class="subtitle">Digital Concert Experience</p>
+        <div class="tour-badge">Live From Your Browser</div>
+    </header>
+
+    <!-- Now Playing -->
+    <div class="now-playing" id="nowPlaying">
+        <div class="status" id="statusText">Ready to rock</div>
+        <div class="eq-bars" id="eqBars">
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+        </div>
+    </div>
+
+    <!-- Stage -->
+    <div class="stage-container" id="stageContainer">
+        <div class="stage" id="stage">
+            <div class="strobe"></div>
+            <div class="band" id="band">
+                <!-- Taylor York - Guitar (Left) -->
+                <div class="member member-taylor">
+                    <svg width="100" height="260" viewBox="0 0 100 260">
+                        <!-- Body -->
+                        <rect x="30" y="70" width="40" height="70" rx="5" fill="#2c2c2c"/>
+                        <!-- Legs -->
+                        <rect x="32" y="138" width="16" height="70" rx="4" fill="#1a1a1a"/>
+                        <rect x="52" y="138" width="16" height="70" rx="4" fill="#1a1a1a"/>
+                        <!-- Shoes -->
+                        <rect x="28" y="202" width="22" height="10" rx="5" fill="#111"/>
+                        <rect x="50" y="202" width="22" height="10" rx="5" fill="#111"/>
+                        <!-- Head -->
+                        <circle cx="50" cy="48" r="24" fill="#d4a87c"/>
+                        <!-- Hair (curly/messy) -->
+                        <ellipse cx="50" cy="35" rx="28" ry="20" fill="#5c3a1e"/>
+                        <circle cx="30" cy="40" r="8" fill="#5c3a1e"/>
+                        <circle cx="70" cy="40" r="8" fill="#5c3a1e"/>
+                        <!-- Eyes -->
+                        <circle cx="42" cy="48" r="2.5" fill="#222"/>
+                        <circle cx="58" cy="48" r="2.5" fill="#222"/>
+                        <!-- Mouth -->
+                        <path d="M43 57 Q50 62 57 57" stroke="#222" stroke-width="1.5" fill="none"/>
+                        <!-- Arms -->
+                        <rect x="12" y="78" width="20" height="12" rx="6" fill="#d4a87c"/>
+                        <rect x="68" y="78" width="20" height="12" rx="6" fill="#d4a87c"/>
+                        <!-- Guitar -->
+                        <rect x="8" y="85" width="6" height="110" rx="3" fill="#8B4513"/>
+                        <ellipse cx="11" cy="130" rx="22" ry="16" fill="#CD853F"/>
+                        <ellipse cx="11" cy="130" rx="8" ry="6" fill="#3a2510"/>
+                        <circle cx="11" cy="130" r="2" fill="#111"/>
+                        <!-- Guitar strings -->
+                        <line x1="11" y1="85" x2="11" y2="195" stroke="#ccc" stroke-width="0.5"/>
+                        <line x1="9" y1="85" x2="9" y2="195" stroke="#ccc" stroke-width="0.5"/>
+                        <line x1="13" y1="85" x2="13" y2="195" stroke="#ccc" stroke-width="0.5"/>
+                        <!-- Shirt detail -->
+                        <line x1="42" y1="72" x2="42" y2="138" stroke="#444" stroke-width="0.5"/>
+                        <rect x="35" y="75" width="30" height="8" rx="2" fill="#3a3a3a"/>
+                    </svg>
+                    <div class="name-tag">Taylor</div>
+                </div>
+
+                <!-- Hayley Williams - Vocals (Center) -->
+                <div class="member member-hayley">
+                    <svg width="110" height="270" viewBox="0 0 110 270">
+                        <!-- Body / Top -->
+                        <rect x="33" y="72" width="44" height="65" rx="5" fill="#1a1a1a"/>
+                        <!-- Tank top detail -->
+                        <path d="M40 72 L55 68 L70 72" stroke="#ff6600" stroke-width="2" fill="none"/>
+                        <!-- Legs (skinny jeans) -->
+                        <rect x="36" y="135" width="15" height="75" rx="4" fill="#222"/>
+                        <rect x="56" y="135" width="15" height="75" rx="4" fill="#222"/>
+                        <!-- Boots -->
+                        <rect x="32" y="204" width="22" height="14" rx="5" fill="#111"/>
+                        <rect x="54" y="204" width="22" height="14" rx="5" fill="#111"/>
+                        <!-- Boot detail -->
+                        <line x1="34" y1="210" x2="52" y2="210" stroke="#333" stroke-width="1"/>
+                        <line x1="56" y1="210" x2="74" y2="210" stroke="#333" stroke-width="1"/>
+                        <!-- Head -->
+                        <circle cx="55" cy="48" r="25" fill="#f0c8a0"/>
+                        <!-- Hair (iconic orange) -->
+                        <ellipse cx="55" cy="34" rx="30" ry="22" fill="#ff6600"/>
+                        <ellipse cx="30" cy="50" rx="10" ry="22" fill="#ff6600"/>
+                        <ellipse cx="80" cy="50" rx="10" ry="22" fill="#ff6600"/>
+                        <ellipse cx="35" cy="75" rx="8" ry="15" fill="#ff6600"/>
+                        <ellipse cx="75" cy="75" rx="8" ry="15" fill="#ff6600"/>
+                        <!-- Highlight streaks -->
+                        <path d="M35 25 Q45 15 55 22" stroke="#ffaa44" stroke-width="2" fill="none"/>
+                        <path d="M60 20 Q70 15 75 25" stroke="#ffaa44" stroke-width="2" fill="none"/>
+                        <!-- Eyes -->
+                        <circle cx="46" cy="47" r="3" fill="#222"/>
+                        <circle cx="64" cy="47" r="3" fill="#222"/>
+                        <!-- Eye highlights -->
+                        <circle cx="47" cy="46" r="1" fill="#fff"/>
+                        <circle cx="65" cy="46" r="1" fill="#fff"/>
+                        <!-- Eyeliner -->
+                        <path d="M41 44 Q46 42 50 44" stroke="#111" stroke-width="1" fill="none"/>
+                        <path d="M60 44 Q64 42 69 44" stroke="#111" stroke-width="1" fill="none"/>
+                        <!-- Mouth (singing) -->
+                        <ellipse cx="55" cy="58" rx="6" ry="5" fill="#c0392b"/>
+                        <ellipse cx="55" cy="56" rx="5" ry="2" fill="#e8b4a0"/>
+                        <!-- Arms -->
+                        <!-- Right arm holding mic up -->
+                        <rect x="75" y="74" width="12" height="40" rx="6" fill="#f0c8a0" transform="rotate(-30 81 74)"/>
+                        <!-- Left arm out -->
+                        <rect x="18" y="80" width="18" height="11" rx="5" fill="#f0c8a0"/>
+                        <!-- Microphone -->
+                        <rect x="92" y="50" width="6" height="22" rx="3" fill="#555"/>
+                        <ellipse cx="95" cy="48" rx="6" ry="7" fill="#333"/>
+                        <ellipse cx="95" cy="48" rx="5" ry="6" fill="#444"/>
+                        <!-- Mic grill pattern -->
+                        <line x1="91" y1="45" x2="99" y2="45" stroke="#555" stroke-width="0.5"/>
+                        <line x1="91" y1="47" x2="99" y2="47" stroke="#555" stroke-width="0.5"/>
+                        <line x1="91" y1="49" x2="99" y2="49" stroke="#555" stroke-width="0.5"/>
+                        <!-- Wristbands -->
+                        <rect x="19" y="88" width="8" height="4" rx="2" fill="#ff6600"/>
+                        <rect x="87" y="55" width="4" height="6" rx="2" fill="#ff3366"/>
+                        <!-- Belt -->
+                        <rect x="33" y="132" width="44" height="5" rx="2" fill="#333"/>
+                        <rect x="52" y="131" width="8" height="7" rx="1" fill="#888"/>
+                    </svg>
+                    <div class="name-tag">Hayley</div>
+                </div>
+
+                <!-- Zac Farro - Drums (Right) -->
+                <div class="member member-zac">
+                    <svg width="160" height="240" viewBox="0 0 160 240">
+                        <!-- Drum Kit -->
+                        <!-- Floor tom -->
+                        <ellipse cx="40" cy="190" rx="28" ry="10" fill="#8B0000"/>
+                        <rect x="12" y="170" width="56" height="20" rx="2" fill="#a01010"/>
+                        <ellipse cx="40" cy="170" rx="28" ry="10" fill="#c0392b"/>
+                        <!-- Snare -->
+                        <ellipse cx="90" cy="175" rx="22" ry="8" fill="#8B0000"/>
+                        <rect x="68" y="162" width="44" height="13" rx="2" fill="#b8860b"/>
+                        <ellipse cx="90" cy="162" rx="22" ry="8" fill="#daa520"/>
+                        <!-- Hi-hat -->
+                        <rect x="128" y="120" width="3" height="70" fill="#888"/>
+                        <ellipse cx="130" cy="155" rx="16" ry="3" fill="#aaa"/>
+                        <ellipse cx="130" cy="152" rx="16" ry="3" fill="#ccc"/>
+                        <!-- Bass drum -->
+                        <ellipse cx="80" cy="210" rx="35" ry="18" fill="#600"/>
+                        <ellipse cx="80" cy="210" rx="30" ry="15" fill="#1a1a1a"/>
+                        <ellipse cx="80" cy="210" rx="18" ry="9" fill="#800"/>
+                        <!-- Crash cymbal -->
+                        <rect x="18" y="100" width="3" height="70" fill="#888"/>
+                        <ellipse cx="20" cy="103" rx="20" ry="4" fill="#daa520"/>
+                        <!-- Ride cymbal -->
+                        <rect x="140" y="105" width="3" height="60" fill="#888"/>
+                        <ellipse cx="142" cy="108" rx="18" ry="4" fill="#b8860b"/>
+                        <!-- Zac - Body (behind drums) -->
+                        <rect x="62" y="100" width="36" height="55" rx="5" fill="#333"/>
+                        <!-- Zac - Head -->
+                        <circle cx="80" cy="78" r="22" fill="#d4a87c"/>
+                        <!-- Hair -->
+                        <ellipse cx="80" cy="65" rx="25" ry="18" fill="#3a2a1a"/>
+                        <circle cx="62" cy="72" r="7" fill="#3a2a1a"/>
+                        <circle cx="98" cy="72" r="7" fill="#3a2a1a"/>
+                        <!-- Eyes -->
+                        <circle cx="73" cy="78" r="2.5" fill="#222"/>
+                        <circle cx="87" cy="78" r="2.5" fill="#222"/>
+                        <!-- Mouth -->
+                        <path d="M74 88 Q80 93 86 88" stroke="#222" stroke-width="1.5" fill="none"/>
+                        <!-- Arms with drumsticks -->
+                        <rect x="42" y="108" width="22" height="10" rx="5" fill="#d4a87c"/>
+                        <rect x="96" y="108" width="22" height="10" rx="5" fill="#d4a87c"/>
+                        <!-- Drumsticks -->
+                        <rect x="28" y="106" width="30" height="3" rx="1.5" fill="#deb887" transform="rotate(-20 43 108)"/>
+                        <rect x="102" y="106" width="30" height="3" rx="1.5" fill="#deb887" transform="rotate(20 117 108)"/>
+                    </svg>
+                    <div class="name-tag">Zac</div>
+                </div>
+            </div>
+
+            <!-- Crowd silhouettes -->
+            <div class="crowd" id="crowd"></div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <button class="btn" id="btnPlay" onclick="play()">
+            <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+            <span class="btn-label">Play</span>
+        </button>
+        <button class="btn" id="btnPause" onclick="pause()">
+            <svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            <span class="btn-label">Pause</span>
+        </button>
+        <button class="btn" id="btnStop" onclick="stop()">
+            <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+            <span class="btn-label">Stop</span>
+        </button>
+    </div>
+
+    <!-- Lyrics Generator -->
+    <div class="lyrics-section">
+        <h2>Write a Song</h2>
+        <div class="prompt-area">
+            <input type="text" id="promptInput" placeholder="Enter one word (e.g. freedom, heartbreak, fire)" maxlength="30" />
+            <button id="generateBtn" onclick="generateLyrics()">Generate</button>
+        </div>
+        <div class="lyrics-display" id="lyricsDisplay">
+            <div class="lyrics-placeholder">
+                Enter a word above and hit Generate to write a Paramore-style song
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        Paramore Digital Concert &mdash; This is a fan-made experience
+    </div>
+
+    <!-- Audio Context for sound -->
+    <script>
+        // ── State ──
+        let state = 'stopped'; // 'playing' | 'paused' | 'stopped'
+        let audioCtx = null;
+        let masterGain = null;
+        let oscillators = [];
+        let noiseNode = null;
+        let beatInterval = null;
+
+        const stageContainer = document.getElementById('stageContainer');
+        const stageLights = document.getElementById('stageLights');
+        const fog = document.getElementById('fog');
+        const statusText = document.getElementById('statusText');
+        const btnPlay = document.getElementById('btnPlay');
+        const btnPause = document.getElementById('btnPause');
+        const btnStop = document.getElementById('btnStop');
+
+        // ── Create crowd hands ──
+        function initCrowd() {
+            const crowd = document.getElementById('crowd');
+            for (let i = 0; i < 40; i++) {
+                const hand = document.createElement('div');
+                hand.className = 'crowd-hand';
+                hand.style.left = (i * 2.5 + Math.random() * 1.5) + '%';
+                hand.style.height = (18 + Math.random() * 20) + 'px';
+                hand.style.animationDelay = (Math.random() * 2) + 's';
+                hand.style.animationDuration = (0.8 + Math.random() * 0.8) + 's';
+                hand.style.background = `hsl(0, 0%, ${10 + Math.random() * 12}%)`;
+                crowd.appendChild(hand);
+            }
+        }
+
+        // ── Create particles ──
+        function initParticles() {
+            const container = document.getElementById('particles');
+            const colors = ['#ff6600', '#ff3366', '#ffcc00', '#ff9933', '#ff66aa'];
+            for (let i = 0; i < 30; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.background = colors[Math.floor(Math.random() * colors.length)];
+                p.style.animationDelay = (Math.random() * 3) + 's';
+                p.style.animationDuration = (2 + Math.random() * 3) + 's';
+                p.style.width = (2 + Math.random() * 4) + 'px';
+                p.style.height = p.style.width;
+                container.appendChild(p);
+            }
+        }
+
+        // ── Web Audio Synthesizer ──
+        function initAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = 0.25;
+            masterGain.connect(audioCtx.destination);
+        }
+
+        function startMusic() {
+            if (!audioCtx) initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            stopMusic();
+
+            // Chord progression: Am - F - C - G (classic Paramore vibes)
+            const chords = [
+                [220, 261.63, 329.63],    // Am
+                [174.61, 220, 261.63],     // F
+                [261.63, 329.63, 392],     // C
+                [196, 246.94, 293.66]      // G
+            ];
+
+            let chordIndex = 0;
+            let beatCount = 0;
+
+            function playBeat() {
+                if (state !== 'playing') return;
+
+                // Change chord every 4 beats
+                if (beatCount % 4 === 0) {
+                    // Kill old oscillators
+                    oscillators.forEach(o => {
+                        try { o.stop(); } catch(e) {}
+                    });
+                    oscillators = [];
+
+                    const chord = chords[chordIndex % chords.length];
+                    chord.forEach(freq => {
+                        // Main tone
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.value = freq;
+                        gain.gain.value = 0.06;
+                        osc.connect(gain);
+                        gain.connect(masterGain);
+                        osc.start();
+                        oscillators.push(osc);
+
+                        // Octave up for shimmer
+                        const osc2 = audioCtx.createOscillator();
+                        const gain2 = audioCtx.createGain();
+                        osc2.type = 'triangle';
+                        osc2.frequency.value = freq * 2;
+                        gain2.gain.value = 0.02;
+                        osc2.connect(gain2);
+                        gain2.connect(masterGain);
+                        osc2.start();
+                        oscillators.push(osc2);
+                    });
+
+                    chordIndex++;
+                }
+
+                // Kick drum sound on beats 1 and 3
+                if (beatCount % 2 === 0) {
+                    const kick = audioCtx.createOscillator();
+                    const kickGain = audioCtx.createGain();
+                    kick.type = 'sine';
+                    kick.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    kick.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.15);
+                    kickGain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                    kickGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                    kick.connect(kickGain);
+                    kickGain.connect(masterGain);
+                    kick.start();
+                    kick.stop(audioCtx.currentTime + 0.2);
+                }
+
+                // Snare on beats 2 and 4
+                if (beatCount % 2 === 1) {
+                    // Noise burst for snare
+                    const bufferSize = audioCtx.sampleRate * 0.1;
+                    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = (Math.random() * 2 - 1) * 0.5;
+                    }
+                    const noise = audioCtx.createBufferSource();
+                    noise.buffer = buffer;
+                    const noiseGain = audioCtx.createGain();
+                    noiseGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    noiseGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                    const noiseFilter = audioCtx.createBiquadFilter();
+                    noiseFilter.type = 'highpass';
+                    noiseFilter.frequency.value = 1000;
+                    noise.connect(noiseFilter);
+                    noiseFilter.connect(noiseGain);
+                    noiseGain.connect(masterGain);
+                    noise.start();
+                }
+
+                // Hi-hat on every beat
+                const hhBufferSize = audioCtx.sampleRate * 0.03;
+                const hhBuffer = audioCtx.createBuffer(1, hhBufferSize, audioCtx.sampleRate);
+                const hhData = hhBuffer.getChannelData(0);
+                for (let i = 0; i < hhBufferSize; i++) {
+                    hhData[i] = (Math.random() * 2 - 1) * 0.15;
+                }
+                const hh = audioCtx.createBufferSource();
+                hh.buffer = hhBuffer;
+                const hhGain = audioCtx.createGain();
+                hhGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                hhGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
+                const hhFilter = audioCtx.createBiquadFilter();
+                hhFilter.type = 'highpass';
+                hhFilter.frequency.value = 5000;
+                hh.connect(hhFilter);
+                hhFilter.connect(hhGain);
+                hhGain.connect(masterGain);
+                hh.start();
+
+                beatCount++;
+            }
+
+            // 140 BPM = ~214ms per 8th note, so 428ms per beat
+            playBeat();
+            beatInterval = setInterval(playBeat, 428);
+        }
+
+        function stopMusic() {
+            if (beatInterval) {
+                clearInterval(beatInterval);
+                beatInterval = null;
+            }
+            oscillators.forEach(o => {
+                try { o.stop(); } catch(e) {}
+            });
+            oscillators = [];
+        }
+
+        // ── Controls ──
+        function play() {
+            state = 'playing';
+            stageContainer.className = 'stage-container playing';
+            document.body.className = 'playing';
+            stageLights.classList.add('active');
+            fog.classList.add('active');
+            statusText.textContent = 'Now playing';
+            statusText.className = 'status live';
+            btnPlay.classList.add('active');
+            btnPause.classList.remove('active');
+            btnStop.classList.remove('active');
+            startMusic();
+        }
+
+        function pause() {
+            if (state !== 'playing') return;
+            state = 'paused';
+            stageContainer.className = 'stage-container paused';
+            document.body.className = 'paused';
+            statusText.textContent = 'Paused';
+            statusText.className = 'status';
+            btnPlay.classList.remove('active');
+            btnPause.classList.add('active');
+            btnStop.classList.remove('active');
+            stopMusic();
+            if (audioCtx) audioCtx.suspend();
+        }
+
+        function stop() {
+            state = 'stopped';
+            stageContainer.className = 'stage-container stopped';
+            document.body.className = 'stopped';
+            stageLights.classList.remove('active');
+            fog.classList.remove('active');
+            statusText.textContent = 'Ready to rock';
+            statusText.className = 'status';
+            btnPlay.classList.remove('active');
+            btnPause.classList.remove('active');
+            btnStop.classList.remove('active');
+            stopMusic();
+            if (audioCtx) {
+                audioCtx.close();
+                audioCtx = null;
+            }
+        }
+
+        // ── Lyrics Generator ──
+        const lyricTemplates = {
+            verse: [
+                [
+                    "I've been searching for the {word} inside my veins",
+                    "Running through the wreckage, dancing in the rain",
+                    "Every scar's a story that I'm not ashamed to tell",
+                    "We've been broken, but we're breaking out of this shell"
+                ],
+                [
+                    "There's a fire burning where the {word} used to be",
+                    "Can you feel the tremor? Can you feel it shake us free?",
+                    "We were never meant to play it safe or play pretend",
+                    "This is where the silence meets its bitter end"
+                ],
+                [
+                    "Caught between the static and the {word} in my chest",
+                    "Tearing down the walls that told us we were less",
+                    "I won't apologize for screaming out your name",
+                    "After everything we lost, nothing feels the same"
+                ],
+                [
+                    "Standing at the edge where {word} collides with light",
+                    "Every breath a battle, every word a fight",
+                    "We could burn the pages of a life we didn't choose",
+                    "There is so much more to gain when you're not scared to lose"
+                ]
+            ],
+            chorus: [
+                [
+                    "This is {WORD}! Can you feel it in your bones?",
+                    "We're not going quietly, we're taking back our throne!",
+                    "Louder now, we're louder than before!",
+                    "This is everything we've been fighting for!"
+                ],
+                [
+                    "So hold on to {WORD}, don't let it slip away!",
+                    "We are more than all the ghosts of yesterday!",
+                    "Screaming at the sky until it hears our voice!",
+                    "This was always ours \u2014 this was always our choice!"
+                ],
+                [
+                    "We are {WORD}! We are neon, we are light!",
+                    "Burning brighter than the darkness of the night!",
+                    "If they try to silence us, we'll only get more loud!",
+                    "We were born to stand out in a world that wants us to bow down!"
+                ]
+            ],
+            bridge: [
+                [
+                    "And I know... I know it's never easy",
+                    "When the {word} is all that's left to hold",
+                    "But we'll carry every fracture",
+                    "Turn our scars to solid gold"
+                ],
+                [
+                    "Breathe in, breathe out, let the {word} take control",
+                    "We've been running for so long, let's finally feel whole",
+                    "No more hiding, no more lying to ourselves",
+                    "This is who we are \u2014 imperfectly ourselves"
+                ]
+            ],
+            outro: [
+                [
+                    "{WORD}... (we're still here)",
+                    "{WORD}... (and we're not afraid)",
+                    "Yeah, we're still standing after everything",
+                    "And we'll keep standing... keep standing..."
+                ],
+                [
+                    "Oh, {word}...",
+                    "It was always about {word}...",
+                    "And we're never letting go",
+                    "(Never letting go...)"
+                ]
+            ]
+        };
+
+        const songTitleTemplates = [
+            "The {Word} We Carry",
+            "{Word} (Ain't It Fun)",
+            "Still Into {Word}",
+            "Brick by Brick ({Word})",
+            "{Word} Is Not a Dirty Word",
+            "Hard Times and {Word}",
+            "Decode: {Word}",
+            "Turn It Off ({Word} Remix)",
+            "After {Word}",
+            "Born for {Word}"
+        ];
+
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+        }
+
+        function pickRandom(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function generateLyrics() {
+            const input = document.getElementById('promptInput');
+            const display = document.getElementById('lyricsDisplay');
+            const word = input.value.trim().toLowerCase().split(/\s+/)[0]; // Take only first word
+
+            if (!word) {
+                input.focus();
+                input.style.borderColor = '#ff3366';
+                setTimeout(() => input.style.borderColor = '#333', 1000);
+                return;
+            }
+
+            display.classList.add('generating');
+            display.innerHTML = '<div class="lyrics-placeholder">Writing your song...</div>';
+
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+
+            setTimeout(() => {
+                const WORD = word.toUpperCase();
+                const Word = capitalize(word);
+
+                // Pick random templates
+                const verse1 = pickRandom(lyricTemplates.verse);
+                let verse2 = pickRandom(lyricTemplates.verse);
+                while (verse2 === verse1) verse2 = pickRandom(lyricTemplates.verse);
+                const chorus = pickRandom(lyricTemplates.chorus);
+                const bridge = pickRandom(lyricTemplates.bridge);
+                const outro = pickRandom(lyricTemplates.outro);
+
+                // Generate title
+                const title = pickRandom(songTitleTemplates)
+                    .replace('{Word}', Word)
+                    .replace('{word}', word);
+
+                // Build lyrics
+                const sections = [
+                    { label: 'Verse 1', lines: verse1, isChorus: false },
+                    { label: 'Chorus', lines: chorus, isChorus: true },
+                    { label: 'Verse 2', lines: verse2, isChorus: false },
+                    { label: 'Chorus', lines: chorus, isChorus: true },
+                    { label: 'Bridge', lines: bridge, isChorus: false },
+                    { label: 'Chorus (Final)', lines: chorus, isChorus: true },
+                    { label: 'Outro', lines: outro, isChorus: false }
+                ];
+
+                let html = `<div class="song-title-display">"${title}"</div><div class="lyrics-content">`;
+                let lineDelay = 0;
+
+                sections.forEach(section => {
+                    html += `<div class="verse">`;
+                    html += `<div class="verse-label">${section.label}</div>`;
+                    section.lines.forEach(line => {
+                        const processedLine = line
+                            .replace('{word}', word)
+                            .replace('{WORD}', WORD)
+                            .replace('{Word}', Word);
+                        const cls = section.isChorus ? 'line chorus-line' : 'line';
+                        html += `<div class="${cls}" style="animation-delay: ${lineDelay * 0.08}s">${processedLine}</div>`;
+                        lineDelay++;
+                    });
+                    html += `</div>`;
+                });
+
+                html += `</div>`;
+
+                display.innerHTML = html;
+                display.classList.remove('generating');
+                btn.disabled = false;
+            }, 800);
+        }
+
+        // Allow Enter key to generate
+        document.getElementById('promptInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') generateLyrics();
+        });
+
+        // ── Init ──
+        initCrowd();
+        initParticles();
+    </script>
+</body>
+</html>
