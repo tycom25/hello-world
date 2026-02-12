@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stranger Things: Escape the Upside Down</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rubik+Glitch&family=Special+Elite&family=Press+Start+2P&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #e0d5c1;
+    font-family: 'Special Elite', monospace;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ── Flickering particles (Upside Down spores) ── */
+  .particle {
+    position: fixed;
+    width: 3px;
+    height: 3px;
+    background: rgba(200, 50, 50, 0.6);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: drift 8s infinite ease-in-out;
+    z-index: 0;
+  }
+  @keyframes drift {
+    0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+    50% { transform: translateY(-60px) translateX(20px); opacity: 0.8; }
+  }
+
+  /* ── Title Screen ── */
+  #title-screen {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 100;
+    background: radial-gradient(ellipse at center, #1a0505 0%, #0a0a0a 70%);
+  }
+
+  #title-screen h1 {
+    font-family: 'Rubik Glitch', cursive;
+    font-size: clamp(2rem, 6vw, 5rem);
+    color: #e23636;
+    text-shadow: 0 0 20px #ff0000, 0 0 60px #ff000088, 0 0 100px #ff000044;
+    letter-spacing: 4px;
+    text-align: center;
+    animation: flicker 3s infinite alternate;
+    margin-bottom: 8px;
+  }
+
+  #title-screen h2 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.6rem, 1.8vw, 1rem);
+    color: #cc4444;
+    text-shadow: 0 0 10px #ff000066;
+    margin-bottom: 40px;
+    text-align: center;
+  }
+
+  @keyframes flicker {
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+    20%, 24%, 55% { opacity: 0.4; }
+  }
+
+  .character-select {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 16px;
+    max-width: 750px;
+    width: 90%;
+    margin-bottom: 30px;
+  }
+
+  .char-card {
+    background: rgba(30, 10, 10, 0.85);
+    border: 2px solid #441111;
+    border-radius: 12px;
+    padding: 18px 10px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .char-card:hover, .char-card.selected {
+    border-color: #e23636;
+    box-shadow: 0 0 20px #ff000044, inset 0 0 30px #ff000011;
+    transform: translateY(-4px);
+  }
+  .char-card.selected::after {
+    content: '';
+    position: absolute; inset: 0;
+    border: 2px solid #ff4444;
+    border-radius: 12px;
+    box-shadow: inset 0 0 20px #ff000033;
+    pointer-events: none;
+  }
+
+  .char-avatar {
+    font-size: 2.8rem;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .char-name {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55rem;
+    color: #ff8888;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .char-ability {
+    font-size: 0.7rem;
+    color: #997777;
+    display: block;
+  }
+
+  #start-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.9rem;
+    padding: 16px 40px;
+    background: transparent;
+    color: #e23636;
+    border: 2px solid #e23636;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.3s;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  #start-btn.ready {
+    opacity: 1;
+    pointer-events: all;
+    animation: pulse-btn 2s infinite;
+  }
+  #start-btn.ready:hover {
+    background: #e23636;
+    color: #0a0a0a;
+    box-shadow: 0 0 30px #ff000066;
+  }
+  @keyframes pulse-btn {
+    0%, 100% { box-shadow: 0 0 5px #ff000033; }
+    50% { box-shadow: 0 0 20px #ff000066; }
+  }
+
+  /* ── Game Screen ── */
+  #game-screen {
+    display: none;
+    position: fixed; inset: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #0a0a0a;
+  }
+
+  #game-hud {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 90%;
+    max-width: 700px;
+    padding: 10px 0;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.6rem;
+    color: #cc4444;
+    z-index: 10;
+  }
+
+  #game-hud .hud-item {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  #ability-bar-container {
+    width: 80px; height: 8px;
+    background: #221111;
+    border: 1px solid #441111;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  #ability-bar {
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, #e23636, #ff6644);
+    transition: width 0.3s;
+  }
+
+  #game-canvas {
+    border: 2px solid #331111;
+    border-radius: 4px;
+    box-shadow: 0 0 40px #ff000022, inset 0 0 60px #00000088;
+    image-rendering: pixelated;
+  }
+
+  #mobile-controls {
+    display: none;
+    gap: 6px;
+    margin-top: 12px;
+    z-index: 10;
+  }
+  .ctrl-btn {
+    width: 54px; height: 54px;
+    font-size: 1.4rem;
+    background: rgba(80, 20, 20, 0.7);
+    border: 1px solid #662222;
+    border-radius: 10px;
+    color: #ff8888;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .ctrl-btn:active { background: rgba(180, 40, 40, 0.7); }
+  #ctrl-ability {
+    font-size: 0.65rem;
+    font-family: 'Press Start 2P', monospace;
+    width: auto;
+    padding: 0 14px;
+  }
+
+  @media (pointer: coarse) {
+    #mobile-controls { display: flex; }
+  }
+
+  /* ── Win / Game Over Screen ── */
+  #end-screen {
+    display: none;
+    position: fixed; inset: 0;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 200;
+    background: radial-gradient(ellipse at center, #0d1a05 0%, #0a0a0a 70%);
+  }
+  #end-screen.lost {
+    background: radial-gradient(ellipse at center, #1a0505 0%, #0a0a0a 70%);
+  }
+  #end-screen h1 {
+    font-family: 'Rubik Glitch', cursive;
+    font-size: clamp(1.8rem, 5vw, 3.5rem);
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  #end-screen.won h1 { color: #44dd44; text-shadow: 0 0 20px #00ff0066; }
+  #end-screen.lost h1 { color: #e23636; text-shadow: 0 0 20px #ff000066; }
+  #end-stats {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.65rem;
+    color: #aaaaaa;
+    text-align: center;
+    margin-bottom: 30px;
+    line-height: 2;
+  }
+  #play-again-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.8rem;
+    padding: 14px 34px;
+    background: transparent;
+    color: #44dd44;
+    border: 2px solid #44dd44;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  #end-screen.lost #play-again-btn { color: #e23636; border-color: #e23636; }
+  #play-again-btn:hover {
+    background: #44dd44;
+    color: #0a0a0a;
+    box-shadow: 0 0 20px #00ff0044;
+  }
+  #end-screen.lost #play-again-btn:hover {
+    background: #e23636;
+    box-shadow: 0 0 20px #ff000044;
+  }
+
+  /* ── Instructions overlay ── */
+  #instructions {
+    position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.45rem;
+    color: #664444;
+    text-align: center;
+    z-index: 10;
+    line-height: 1.8;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- Floating particles -->
+<div id="particles"></div>
+
+<!-- ── TITLE SCREEN ── -->
+<div id="title-screen">
+  <h1>Stranger Things</h1>
+  <h2>Escape the Upside Down</h2>
+
+  <div class="character-select" id="character-select"></div>
+  <button id="start-btn">Enter the Upside Down</button>
+</div>
+
+<!-- ── GAME SCREEN ── -->
+<div id="game-screen">
+  <div id="game-hud">
+    <div class="hud-item">
+      <span id="hud-char"></span>
+      <span id="hud-name"></span>
+    </div>
+    <div class="hud-item">
+      <span>TIME</span>
+      <span id="hud-timer">0.0s</span>
+    </div>
+    <div class="hud-item">
+      <span>ABILITY</span>
+      <div id="ability-bar-container"><div id="ability-bar"></div></div>
+    </div>
+    <div class="hud-item">
+      <span>LEVEL</span>
+      <span id="hud-level">1</span>
+    </div>
+  </div>
+
+  <canvas id="game-canvas"></canvas>
+
+  <div id="mobile-controls">
+    <div style="display:grid; grid-template-columns: repeat(3,54px); grid-template-rows: repeat(3,54px); gap:4px;">
+      <div></div>
+      <button class="ctrl-btn" data-dir="up">&#9650;</button>
+      <div></div>
+      <button class="ctrl-btn" data-dir="left">&#9664;</button>
+      <button class="ctrl-btn" id="ctrl-ability">USE</button>
+      <button class="ctrl-btn" data-dir="right">&#9654;</button>
+      <div></div>
+      <button class="ctrl-btn" data-dir="down">&#9660;</button>
+      <div></div>
+    </div>
+  </div>
+
+  <div id="instructions">
+    ARROW KEYS / WASD to move &mdash; SPACE to use ability &mdash; Reach the portal to escape!
+  </div>
+</div>
+
+<!-- ── END SCREEN ── -->
+<div id="end-screen">
+  <h1 id="end-title"></h1>
+  <div id="end-stats"></div>
+  <button id="play-again-btn">Play Again</button>
+</div>
+
+<script>
+// ──────────────────────────────────────────────
+// CHARACTERS
+// ──────────────────────────────────────────────
+const CHARACTERS = [
+  { id:'eleven',   name:'Eleven',      emoji:'👧', color:'#e244aa', ability:'Psychic Blast',   desc:'Destroy nearby walls',  cooldown:8000 },
+  { id:'mike',     name:'Mike',        emoji:'🧑', color:'#4488ee', ability:'Walkie Talkie',   desc:'Reveal map briefly',    cooldown:10000 },
+  { id:'dustin',   name:'Dustin',      emoji:'🧢', color:'#44bb66', ability:'Compass',         desc:'Arrow points to exit',  cooldown:6000 },
+  { id:'lucas',    name:'Lucas',       emoji:'🏹', color:'#ddaa33', ability:'Slingshot',       desc:'Stun enemies in line',  cooldown:7000 },
+  { id:'will',     name:'Will',        emoji:'🔦', color:'#88ccff', ability:'Hiding',          desc:'Turn invisible 3s',     cooldown:9000 },
+];
+
+// ──────────────────────────────────────────────
+// GLOBALS
+// ──────────────────────────────────────────────
+let selectedChar = null;
+let canvas, ctx;
+let CELL = 28;                 // px per cell
+let COLS, ROWS;
+let maze = [];                 // 2D: 0=path,1=wall,2=exit,3=vine(slow)
+let playerX, playerY;          // grid coords
+let enemies = [];
+let exitX, exitY;
+let gameRunning = false;
+let timerStart, elapsed = 0;
+let totalTime = 0;
+let level = 1;
+const MAX_LEVEL = 3;
+let abilityCooldownEnd = 0;
+let abilityActive = false;
+let abilityTimer = null;
+let invisibleUntil = 0;
+let compassUntil = 0;
+let revealUntil = 0;
+let stunUntil = 0;
+let fogEnabled = true;
+let keysDown = {};
+let moveInterval = null;
+let lastMoveTime = 0;
+const MOVE_DELAY = 120; // ms between repeated moves
+
+// ──────────────────────────────────────────────
+// PARTICLES
+// ──────────────────────────────────────────────
+(function spawnParticles() {
+  const cont = document.getElementById('particles');
+  for (let i = 0; i < 40; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.top = Math.random() * 100 + '%';
+    p.style.animationDelay = (Math.random() * 8) + 's';
+    p.style.animationDuration = (5 + Math.random() * 6) + 's';
+    if (Math.random() > 0.5) p.style.background = 'rgba(100, 180, 255, 0.3)';
+    cont.appendChild(p);
+  }
+})();
+
+// ──────────────────────────────────────────────
+// CHARACTER SELECT
+// ──────────────────────────────────────────────
+const selectCont = document.getElementById('character-select');
+const startBtn  = document.getElementById('start-btn');
+
+CHARACTERS.forEach(c => {
+  const card = document.createElement('div');
+  card.className = 'char-card';
+  card.dataset.id = c.id;
+  card.innerHTML = `
+    <span class="char-avatar">${c.emoji}</span>
+    <span class="char-name">${c.name}</span>
+    <span class="char-ability">${c.ability}: ${c.desc}</span>
+  `;
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.char-card').forEach(el => el.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedChar = c;
+    startBtn.classList.add('ready');
+  });
+  selectCont.appendChild(card);
+});
+
+startBtn.addEventListener('click', () => { if (selectedChar) startGame(); });
+
+// ──────────────────────────────────────────────
+// MAZE GENERATION (recursive back-tracker)
+// ──────────────────────────────────────────────
+function generateMaze(cols, rows) {
+  // internal grid uses odd coords for paths
+  const w = cols, h = rows;
+  const grid = Array.from({length: h}, () => Array(w).fill(1));
+
+  function carve(x, y) {
+    grid[y][x] = 0;
+    const dirs = [[0,-2],[0,2],[-2,0],[2,0]].sort(() => Math.random() - 0.5);
+    for (const [dx, dy] of dirs) {
+      const nx = x + dx, ny = y + dy;
+      if (nx > 0 && nx < w - 1 && ny > 0 && ny < h - 1 && grid[ny][nx] === 1) {
+        grid[y + dy/2][x + dx/2] = 0;
+        carve(nx, ny);
+      }
+    }
+  }
+
+  carve(1, 1);
+
+  // Add some extra passages to make it less linear
+  const extraPaths = Math.floor((cols * rows) * 0.04);
+  for (let i = 0; i < extraPaths; i++) {
+    const rx = 1 + Math.floor(Math.random() * (w - 2));
+    const ry = 1 + Math.floor(Math.random() * (h - 2));
+    if (grid[ry][rx] === 1) {
+      // Check if removing makes a loop (has >=2 adjacent paths)
+      let adj = 0;
+      if (ry > 0 && grid[ry-1][rx] === 0) adj++;
+      if (ry < h-1 && grid[ry+1][rx] === 0) adj++;
+      if (rx > 0 && grid[ry][rx-1] === 0) adj++;
+      if (rx < w-1 && grid[ry][rx+1] === 0) adj++;
+      if (adj >= 2) grid[ry][rx] = 0;
+    }
+  }
+
+  // Scatter vines (slow tiles)
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (grid[y][x] === 0 && Math.random() < 0.08 && !(x === 1 && y === 1)) {
+        grid[y][x] = 3;
+      }
+    }
+  }
+
+  // Place exit far from start
+  let bestDist = 0;
+  let ex = w - 2, ey = h - 2;
+  for (let y = h - 1; y > h / 2; y--) {
+    for (let x = w - 1; x > w / 2; x--) {
+      if (grid[y][x] === 0 || grid[y][x] === 3) {
+        const d = Math.abs(x - 1) + Math.abs(y - 1);
+        if (d > bestDist) { bestDist = d; ex = x; ey = y; }
+      }
+    }
+  }
+  grid[ey][ex] = 2;
+
+  return { grid, exitX: ex, exitY: ey };
+}
+
+// ──────────────────────────────────────────────
+// ENEMY
+// ──────────────────────────────────────────────
+function spawnEnemies(count) {
+  enemies = [];
+  for (let i = 0; i < count; i++) {
+    let ex, ey, tries = 0;
+    do {
+      ex = Math.floor(Math.random() * COLS);
+      ey = Math.floor(Math.random() * ROWS);
+      tries++;
+    } while ((maze[ey][ex] === 1 || (Math.abs(ex - 1) + Math.abs(ey - 1)) < 8) && tries < 500);
+    if (maze[ey][ex] !== 1) {
+      enemies.push({ x: ex, y: ey, dir: Math.floor(Math.random()*4), moveTimer: 0, stunned: false });
+    }
+  }
+}
+
+function moveEnemies() {
+  const now = Date.now();
+  const dirs = [[0,-1],[0,1],[-1,0],[1,0]];
+  enemies.forEach(e => {
+    if (e.stunned) return;
+    if (now - e.moveTimer < 400) return;
+    e.moveTimer = now;
+
+    // Occasionally change direction
+    if (Math.random() < 0.3) e.dir = Math.floor(Math.random() * 4);
+
+    // Try to move toward player sometimes
+    if (Math.random() < 0.35 && invisibleUntil < now) {
+      const dx = playerX - e.x, dy = playerY - e.y;
+      if (Math.abs(dx) > Math.abs(dy)) e.dir = dx > 0 ? 3 : 2;
+      else e.dir = dy > 0 ? 1 : 0;
+    }
+
+    const [ddx, ddy] = dirs[e.dir];
+    const nx = e.x + ddx, ny = e.y + ddy;
+    if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS && maze[ny][nx] !== 1) {
+      e.x = nx;
+      e.y = ny;
+    } else {
+      e.dir = Math.floor(Math.random() * 4);
+    }
+  });
+}
+
+// ──────────────────────────────────────────────
+// ABILITIES
+// ──────────────────────────────────────────────
+function useAbility() {
+  const now = Date.now();
+  if (now < abilityCooldownEnd) return;
+  abilityCooldownEnd = now + selectedChar.cooldown;
+
+  switch (selectedChar.id) {
+    case 'eleven':
+      // Destroy walls in radius 2
+      for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
+          const wx = playerX + dx, wy = playerY + dy;
+          if (wx >= 0 && wx < COLS && wy >= 0 && wy < ROWS && maze[wy][wx] === 1) {
+            maze[wy][wx] = 0;
+          }
+        }
+      }
+      // Push enemies
+      enemies.forEach(e => {
+        if (Math.abs(e.x - playerX) <= 3 && Math.abs(e.y - playerY) <= 3) {
+          e.stunned = true;
+          setTimeout(() => e.stunned = false, 3000);
+        }
+      });
+      // Flash effect
+      abilityActive = true;
+      setTimeout(() => abilityActive = false, 300);
+      break;
+
+    case 'mike':
+      // Reveal entire map for 3 seconds
+      revealUntil = now + 3000;
+      break;
+
+    case 'dustin':
+      // Show compass arrow to exit for 5 seconds
+      compassUntil = now + 5000;
+      break;
+
+    case 'lucas':
+      // Stun enemies in a line (all 4 directions, range 5)
+      enemies.forEach(e => {
+        if ((e.x === playerX && Math.abs(e.y - playerY) <= 5) ||
+            (e.y === playerY && Math.abs(e.x - playerX) <= 5)) {
+          e.stunned = true;
+          setTimeout(() => e.stunned = false, 4000);
+        }
+      });
+      stunUntil = now + 300;
+      break;
+
+    case 'will':
+      // Invisible for 3 seconds
+      invisibleUntil = now + 3000;
+      break;
+  }
+}
+
+// ──────────────────────────────────────────────
+// RENDERING
+// ──────────────────────────────────────────────
+function render() {
+  if (!gameRunning) return;
+  const now = Date.now();
+  elapsed = (now - timerStart) / 1000;
+  document.getElementById('hud-timer').textContent = (totalTime + elapsed).toFixed(1) + 's';
+
+  // Ability bar
+  const cdLeft = Math.max(0, abilityCooldownEnd - now);
+  const pct = 1 - cdLeft / selectedChar.cooldown;
+  document.getElementById('ability-bar').style.width = (pct * 100) + '%';
+
+  const W = canvas.width, H = canvas.height;
+  ctx.fillStyle = '#0a0808';
+  ctx.fillRect(0, 0, W, H);
+
+  const isRevealed = now < revealUntil;
+  const viewRadius = isRevealed ? 999 : (selectedChar.id === 'will' ? 5 : 6);
+
+  // Draw maze
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const dist = Math.abs(x - playerX) + Math.abs(y - playerY);
+      const inView = dist <= viewRadius;
+
+      if (fogEnabled && !inView) {
+        // Slight hint of walls in darkness
+        if (dist <= viewRadius + 2) {
+          ctx.fillStyle = '#0f0808';
+          ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+        }
+        continue;
+      }
+
+      const fogAlpha = fogEnabled ? Math.max(0.25, 1 - dist / (viewRadius + 2)) : 1;
+
+      const tile = maze[y][x];
+      if (tile === 1) {
+        // Wall - organic Upside Down look
+        const shade = 20 + Math.floor(Math.random() * 15);
+        ctx.fillStyle = `rgba(${shade + 15}, ${shade}, ${shade + 5}, ${fogAlpha})`;
+        ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+        // Vine texture
+        if (Math.random() > 0.6) {
+          ctx.fillStyle = `rgba(60, 20, 20, ${fogAlpha * 0.5})`;
+          ctx.fillRect(x * CELL + CELL/3, y * CELL, CELL/3, CELL);
+        }
+      } else if (tile === 0 || tile === 3) {
+        // Floor
+        ctx.fillStyle = `rgba(18, 12, 12, ${fogAlpha})`;
+        ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+        // Vine/slow tile
+        if (tile === 3) {
+          ctx.fillStyle = `rgba(30, 70, 30, ${fogAlpha * 0.5})`;
+          for (let v = 0; v < 3; v++) {
+            ctx.fillRect(
+              x * CELL + Math.random() * CELL * 0.7,
+              y * CELL + Math.random() * CELL * 0.7,
+              CELL * 0.3, 2
+            );
+          }
+        }
+      } else if (tile === 2) {
+        // Exit portal
+        ctx.fillStyle = `rgba(18, 12, 12, ${fogAlpha})`;
+        ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+        const pulse = 0.5 + 0.5 * Math.sin(now / 200);
+        ctx.fillStyle = `rgba(100, 200, 255, ${pulse * fogAlpha})`;
+        ctx.beginPath();
+        ctx.arc(x * CELL + CELL/2, y * CELL + CELL/2, CELL/2.5, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = `rgba(200, 240, 255, ${pulse * 0.6 * fogAlpha})`;
+        ctx.beginPath();
+        ctx.arc(x * CELL + CELL/2, y * CELL + CELL/2, CELL/5, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+  }
+
+  // Ability: eleven blast visual
+  if (abilityActive && selectedChar.id === 'eleven') {
+    ctx.fillStyle = 'rgba(226, 68, 170, 0.15)';
+    ctx.beginPath();
+    ctx.arc(playerX * CELL + CELL/2, playerY * CELL + CELL/2, CELL * 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Ability: lucas slingshot visual
+  if (now < stunUntil) {
+    ctx.strokeStyle = 'rgba(221, 170, 51, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(playerX * CELL + CELL/2, 0);
+    ctx.lineTo(playerX * CELL + CELL/2, ROWS * CELL);
+    ctx.moveTo(0, playerY * CELL + CELL/2);
+    ctx.lineTo(COLS * CELL, playerY * CELL + CELL/2);
+    ctx.stroke();
+  }
+
+  // Draw enemies
+  enemies.forEach(e => {
+    const dist = Math.abs(e.x - playerX) + Math.abs(e.y - playerY);
+    if (fogEnabled && dist > viewRadius && !isRevealed) return;
+    const ea = fogEnabled ? Math.max(0.3, 1 - dist / (viewRadius + 2)) : 1;
+
+    if (e.stunned) {
+      ctx.fillStyle = `rgba(100, 100, 60, ${ea})`;
+    } else {
+      ctx.fillStyle = `rgba(200, 40, 40, ${ea})`;
+    }
+    // Demogorgon shape
+    const cx = e.x * CELL + CELL / 2;
+    const cy = e.y * CELL + CELL / 2;
+    ctx.beginPath();
+    // Flower-petal head
+    for (let i = 0; i < 5; i++) {
+      const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
+      const r = CELL * 0.4;
+      ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+      const midAngle = angle + Math.PI / 5;
+      ctx.lineTo(cx + Math.cos(midAngle) * r * 0.5, cy + Math.sin(midAngle) * r * 0.5);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    if (e.stunned) {
+      ctx.fillStyle = `rgba(255, 255, 100, ${ea})`;
+      ctx.font = `${CELL * 0.5}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText('*', cx, cy + 3);
+    }
+  });
+
+  // Draw player
+  const px = playerX * CELL + CELL / 2;
+  const py = playerY * CELL + CELL / 2;
+  const isInvis = now < invisibleUntil;
+  const playerAlpha = isInvis ? 0.3 : 1;
+
+  // Glow
+  const grad = ctx.createRadialGradient(px, py, 0, px, py, CELL * 1.5);
+  grad.addColorStop(0, `${selectedChar.color}${isInvis ? '11' : '33'}`);
+  grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(px, py, CELL * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Character circle
+  ctx.globalAlpha = playerAlpha;
+  ctx.fillStyle = selectedChar.color;
+  ctx.beginPath();
+  ctx.arc(px, py, CELL * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = `${CELL * 0.55}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(selectedChar.emoji, px, py + 1);
+  ctx.globalAlpha = 1;
+
+  // Compass arrow (Dustin ability)
+  if (now < compassUntil) {
+    const angle = Math.atan2(exitY - playerY, exitX - playerX);
+    ctx.strokeStyle = '#44ff88';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px + Math.cos(angle) * CELL * 2, py + Math.sin(angle) * CELL * 2);
+    ctx.stroke();
+    // Arrowhead
+    ctx.fillStyle = '#44ff88';
+    ctx.beginPath();
+    const ax = px + Math.cos(angle) * CELL * 2;
+    const ay = py + Math.sin(angle) * CELL * 2;
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax - Math.cos(angle - 0.4) * 8, ay - Math.sin(angle - 0.4) * 8);
+    ctx.lineTo(ax - Math.cos(angle + 0.4) * 8, ay - Math.sin(angle + 0.4) * 8);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Check collisions
+  moveEnemies();
+  if (!isInvis) {
+    for (const e of enemies) {
+      if (e.x === playerX && e.y === playerY && !e.stunned) {
+        endGame(false);
+        return;
+      }
+    }
+  }
+
+  // Check win
+  if (maze[playerY][playerX] === 2) {
+    totalTime += elapsed;
+    level++;
+    if (level > MAX_LEVEL) {
+      endGame(true);
+      return;
+    }
+    document.getElementById('hud-level').textContent = level;
+    initLevel();
+    return;
+  }
+
+  requestAnimationFrame(render);
+}
+
+// ──────────────────────────────────────────────
+// GAME LOGIC
+// ──────────────────────────────────────────────
+function initLevel() {
+  // Maze sizes per level
+  const sizes = [
+    { cols: 21, rows: 15 },
+    { cols: 27, rows: 19 },
+    { cols: 33, rows: 23 },
+  ];
+  const sz = sizes[level - 1];
+  COLS = sz.cols;
+  ROWS = sz.rows;
+
+  // Resize canvas
+  canvas.width = COLS * CELL;
+  canvas.height = ROWS * CELL;
+
+  const result = generateMaze(COLS, ROWS);
+  maze = result.grid;
+  exitX = result.exitX;
+  exitY = result.exitY;
+
+  playerX = 1;
+  playerY = 1;
+
+  const enemyCount = level + 2;
+  spawnEnemies(enemyCount);
+
+  timerStart = Date.now();
+  abilityCooldownEnd = 0;
+  invisibleUntil = 0;
+  compassUntil = 0;
+  revealUntil = 0;
+  stunUntil = 0;
+  abilityActive = false;
+
+  requestAnimationFrame(render);
+}
+
+function startGame() {
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'flex';
+  document.getElementById('end-screen').style.display = 'none';
+
+  document.getElementById('hud-char').textContent = selectedChar.emoji;
+  document.getElementById('hud-name').textContent = selectedChar.name;
+
+  canvas = document.getElementById('game-canvas');
+  ctx = canvas.getContext('2d');
+  level = 1;
+  totalTime = 0;
+  document.getElementById('hud-level').textContent = '1';
+
+  gameRunning = true;
+  initLevel();
+}
+
+function endGame(won) {
+  gameRunning = false;
+  const endScreen = document.getElementById('end-screen');
+  endScreen.style.display = 'flex';
+  endScreen.className = won ? 'won' : 'lost';
+
+  document.getElementById('end-title').textContent =
+    won ? 'You Escaped!' : 'The Demogorgon Got You!';
+
+  if (won) {
+    document.getElementById('end-stats').innerHTML =
+      `Character: ${selectedChar.emoji} ${selectedChar.name}<br>
+       Total Time: ${totalTime.toFixed(2)}s<br>
+       Levels Cleared: ${MAX_LEVEL}`;
+  } else {
+    document.getElementById('end-stats').innerHTML =
+      `Character: ${selectedChar.emoji} ${selectedChar.name}<br>
+       Survived: ${(totalTime + elapsed).toFixed(2)}s<br>
+       Reached Level: ${level} / ${MAX_LEVEL}`;
+  }
+}
+
+document.getElementById('play-again-btn').addEventListener('click', () => {
+  document.getElementById('end-screen').style.display = 'none';
+  document.getElementById('title-screen').style.display = 'flex';
+  document.getElementById('game-screen').style.display = 'none';
+  startBtn.classList.remove('ready');
+  document.querySelectorAll('.char-card').forEach(el => el.classList.remove('selected'));
+  selectedChar = null;
+});
+
+// ──────────────────────────────────────────────
+// INPUT
+// ──────────────────────────────────────────────
+function tryMove(dx, dy) {
+  if (!gameRunning) return;
+  const nx = playerX + dx;
+  const ny = playerY + dy;
+  if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) return;
+  if (maze[ny][nx] === 1) return;
+
+  // Slow on vine
+  const now = Date.now();
+  if (maze[playerY][playerX] === 3) {
+    if (now - lastMoveTime < MOVE_DELAY * 2.5) return;
+  } else {
+    if (now - lastMoveTime < MOVE_DELAY) return;
+  }
+  lastMoveTime = now;
+  playerX = nx;
+  playerY = ny;
+}
+
+function handleKey(e) {
+  const key = e.key.toLowerCase();
+  switch (key) {
+    case 'arrowup':    case 'w': e.preventDefault(); tryMove(0, -1); break;
+    case 'arrowdown':  case 's': e.preventDefault(); tryMove(0, 1);  break;
+    case 'arrowleft':  case 'a': e.preventDefault(); tryMove(-1, 0); break;
+    case 'arrowright': case 'd': e.preventDefault(); tryMove(1, 0);  break;
+    case ' ':          e.preventDefault(); useAbility(); break;
+  }
+}
+
+document.addEventListener('keydown', handleKey);
+
+// Mobile controls
+document.querySelectorAll('.ctrl-btn[data-dir]').forEach(btn => {
+  const dir = btn.dataset.dir;
+  const map = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] };
+
+  let interval;
+  const startMove = (e) => {
+    e.preventDefault();
+    const [dx, dy] = map[dir];
+    tryMove(dx, dy);
+    interval = setInterval(() => tryMove(dx, dy), MOVE_DELAY + 30);
+  };
+  const stopMove = () => clearInterval(interval);
+
+  btn.addEventListener('touchstart', startMove, { passive: false });
+  btn.addEventListener('touchend', stopMove);
+  btn.addEventListener('touchcancel', stopMove);
+  btn.addEventListener('mousedown', startMove);
+  btn.addEventListener('mouseup', stopMove);
+  btn.addEventListener('mouseleave', stopMove);
+});
+
+document.getElementById('ctrl-ability').addEventListener('click', useAbility);
+document.getElementById('ctrl-ability').addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  useAbility();
+}, { passive: false });
+
+// Continuous movement with held keys
+document.addEventListener('keydown', (e) => {
+  keysDown[e.key.toLowerCase()] = true;
+});
+document.addEventListener('keyup', (e) => {
+  keysDown[e.key.toLowerCase()] = false;
+});
+
+setInterval(() => {
+  if (!gameRunning) return;
+  if (keysDown['arrowup']    || keysDown['w']) tryMove(0, -1);
+  if (keysDown['arrowdown']  || keysDown['s']) tryMove(0, 1);
+  if (keysDown['arrowleft']  || keysDown['a']) tryMove(-1, 0);
+  if (keysDown['arrowright'] || keysDown['d']) tryMove(1, 0);
+}, MOVE_DELAY + 10);
+</script>
+
+</body>
+</html>
