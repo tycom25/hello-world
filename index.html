@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Netscape Navigator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="netscape-window">
+    <!-- Title Bar -->
+    <div class="title-bar">
+      <div class="title-bar-text">Netscape Navigator - [Netscape Search]</div>
+      <div class="title-bar-controls">
+        <button class="title-btn minimize-btn">_</button>
+        <button class="title-btn maximize-btn">&#9633;</button>
+        <button class="title-btn close-btn">X</button>
+      </div>
+    </div>
+
+    <!-- Menu Bar -->
+    <div class="menu-bar">
+      <span class="menu-item">File</span>
+      <span class="menu-item">Edit</span>
+      <span class="menu-item">View</span>
+      <span class="menu-item">Go</span>
+      <span class="menu-item">Communicator</span>
+      <span class="menu-item">Help</span>
+    </div>
+
+    <!-- Navigation Toolbar -->
+    <div class="nav-toolbar">
+      <div class="toolbar-buttons">
+        <button class="toolbar-btn" id="btn-back" title="Back">
+          <div class="toolbar-icon">&#9664;</div>
+          <div class="toolbar-label">Back</div>
+        </button>
+        <button class="toolbar-btn" id="btn-forward" title="Forward">
+          <div class="toolbar-icon">&#9654;</div>
+          <div class="toolbar-label">Forward</div>
+        </button>
+        <button class="toolbar-btn" id="btn-reload" title="Reload">
+          <div class="toolbar-icon">&#8635;</div>
+          <div class="toolbar-label">Reload</div>
+        </button>
+        <button class="toolbar-btn" id="btn-home" title="Home">
+          <div class="toolbar-icon">&#8962;</div>
+          <div class="toolbar-label">Home</div>
+        </button>
+        <button class="toolbar-btn" id="btn-search" title="Search">
+          <div class="toolbar-icon">&#128269;</div>
+          <div class="toolbar-label">Search</div>
+        </button>
+        <button class="toolbar-btn" id="btn-print" title="Print">
+          <div class="toolbar-icon">&#128424;</div>
+          <div class="toolbar-label">Print</div>
+        </button>
+        <button class="toolbar-btn" id="btn-stop" title="Stop">
+          <div class="toolbar-icon">&#10060;</div>
+          <div class="toolbar-label">Stop</div>
+        </button>
+      </div>
+      <div class="throbber" id="throbber">
+        <div class="throbber-n">N</div>
+      </div>
+    </div>
+
+    <!-- Location Bar -->
+    <div class="location-bar">
+      <label class="location-label">Location:</label>
+      <input type="text" class="location-input" id="location-input" value="https://www.google.com/" spellcheck="false">
+      <button class="go-btn" id="go-btn">Go</button>
+    </div>
+
+    <!-- Bookmarks Toolbar -->
+    <div class="bookmarks-bar">
+      <span class="bookmark-label">Bookmarks:</span>
+      <a href="#" class="bookmark-link" data-url="https://www.google.com/">Google</a>
+      <a href="#" class="bookmark-link" data-url="https://www.yahoo.com/">Yahoo!</a>
+      <a href="#" class="bookmark-link" data-url="https://www.altavista.com/">AltaVista</a>
+      <a href="#" class="bookmark-link" data-url="https://www.geocities.com/">GeoCities</a>
+      <a href="#" class="bookmark-link" data-url="https://www.angelfire.com/">Angelfire</a>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="content-area" id="content-area">
+      <!-- Home / Search Page -->
+      <div class="search-page" id="search-page">
+        <div class="netscape-logo-area">
+          <div class="nn-logo">
+            <div class="nn-logo-n">N</div>
+            <div class="nn-logo-ring"></div>
+          </div>
+          <h1 class="nn-title">NETSCAPE</h1>
+          <p class="nn-subtitle">N A V I G A T O R</p>
+        </div>
+
+        <div class="search-box">
+          <div class="search-powered">Search the Web</div>
+          <form id="search-form">
+            <div class="search-input-row">
+              <input
+                type="text"
+                id="search-input"
+                class="search-input"
+                placeholder="Enter your search query..."
+                autocomplete="off"
+              >
+              <button type="submit" class="search-btn">Net Search</button>
+            </div>
+          </form>
+          <div class="search-powered-by">Powered by Google&trade;</div>
+        </div>
+
+        <div class="quick-links">
+          <h3>What's Cool?</h3>
+          <div class="quick-links-grid">
+            <a href="#" class="quick-link" data-search="latest news today">Today's News</a>
+            <a href="#" class="quick-link" data-search="sports scores">Sports</a>
+            <a href="#" class="quick-link" data-search="stock market">Finance</a>
+            <a href="#" class="quick-link" data-search="weather forecast">Weather</a>
+            <a href="#" class="quick-link" data-search="entertainment news">Entertainment</a>
+            <a href="#" class="quick-link" data-search="technology news">Technology</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search Results (shown via iframe) -->
+      <iframe id="results-frame" class="results-frame" sandbox="allow-scripts allow-same-origin allow-popups allow-forms" style="display:none;"></iframe>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="status-text" id="status-text">Document: Done</div>
+      <div class="status-security">
+        <div class="security-icon" id="security-icon" title="Security"></div>
+      </div>
+      <div class="status-progress">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
