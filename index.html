@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AWS Knowledge Quiz</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">☁️</div>
+      <h1>AWS Knowledge Quiz</h1>
+      <p class="subtitle">Test your AWS cloud expertise with True / False questions</p>
+    </header>
+
+    <!-- Start Screen -->
+    <section id="start-screen" class="screen active">
+      <div class="card">
+        <h2>Ready to test your AWS knowledge?</h2>
+        <ul class="info-list">
+          <li>📋 <span id="total-count"></span> true/false questions</li>
+          <li>🎯 Answer each question carefully</li>
+          <li>📊 Get your score at the end</li>
+        </ul>
+        <button id="start-btn" class="btn btn-primary">Start Quiz</button>
+      </div>
+    </section>
+
+    <!-- Quiz Screen -->
+    <section id="quiz-screen" class="screen">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <div class="meta-row">
+        <span id="question-counter"></span>
+        <span id="score-tracker">Score: 0</span>
+      </div>
+      <div class="card question-card">
+        <p class="category-tag" id="category-tag"></p>
+        <h2 id="question-text"></h2>
+        <div class="answer-buttons">
+          <button class="btn btn-true" id="btn-true" onclick="submitAnswer(true)">
+            ✅ True
+          </button>
+          <button class="btn btn-false" id="btn-false" onclick="submitAnswer(false)">
+            ❌ False
+          </button>
+        </div>
+        <div id="feedback" class="feedback hidden"></div>
+        <button id="next-btn" class="btn btn-next hidden" onclick="nextQuestion()">
+          Next →
+        </button>
+      </div>
+    </section>
+
+    <!-- Results Screen -->
+    <section id="results-screen" class="screen">
+      <div class="card results-card">
+        <div id="result-icon" class="result-icon"></div>
+        <h2 id="result-title"></h2>
+        <p id="result-subtitle"></p>
+        <div class="score-circle">
+          <span id="score-display"></span>
+          <small>out of <span id="total-display"></span></small>
+        </div>
+        <div class="score-bar-wrap">
+          <div class="score-bar" id="score-bar"></div>
+        </div>
+        <p id="score-percent" class="percent-label"></p>
+        <div id="review-list" class="review-list"></div>
+        <button class="btn btn-primary" onclick="restartQuiz()">🔄 Try Again</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="quiz.js"></script>
+</body>
+</html>
