@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amazon Business Canada — Quote Engine</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<div class="navbar">
+  <div class="logo">
+    Amazon Business <span class="ca">Canada</span> — Quote Engine
+  </div>
+  <nav>
+    <a href="index.html" class="active">Customer</a>
+    <a href="vendor.html">Vendor Portal</a>
+  </nav>
+</div>
+
+<div class="container">
+
+  <!-- Stepper -->
+  <div class="stepper" id="stepper">
+    <div class="step active" data-step="1">1. Select Products</div>
+    <div class="step" data-step="2">2. Request Details</div>
+    <div class="step" data-step="3">3. Review &amp; Submit</div>
+    <div class="step" data-step="4">4. Compare Quotes</div>
+  </div>
+
+  <!-- ═══════════════ STEP 1: Product Selection ═══════════════ -->
+  <div id="step-1" class="step-content">
+    <div class="page-header">
+      <h1>Build Your Quote</h1>
+      <p>Search for products or enter ASINs directly to request bulk pricing from 3P vendors.</p>
+    </div>
+
+    <div class="card">
+      <h2>Add Products by ASIN</h2>
+      <div class="form-row">
+        <div style="flex:2">
+          <label>ASIN</label>
+          <input type="text" id="asin-input" placeholder="e.g. B09V3KXJPB" maxlength="10">
+        </div>
+        <div>
+          <label>Quantity</label>
+          <input type="number" id="qty-input" placeholder="100" min="1" value="100">
+        </div>
+        <div>
+          <label>Target Price (CAD, optional)</label>
+          <input type="number" id="target-price-input" placeholder="—" min="0" step="0.01">
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn btn-primary" onclick="addItem()">+ Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick-add sample products -->
+    <div class="card">
+      <h2>Popular Products</h2>
+      <p class="text-sm text-muted mb-4">Click to add to your quote.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ASIN</th><th>Product</th><th>List Price</th><th></th></tr></thead>
+          <tbody id="popular-products"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Cart -->
+    <div class="card">
+      <div class="flex justify-between items-center mb-2">
+        <h2>Your Items (<span id="item-count">0</span>)</h2>
+        <button class="btn btn-outline btn-sm" onclick="clearCart()">Clear All</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ASIN</th><th>Product</th><th>Qty</th><th>Target Price</th><th></th></tr></thead>
+          <tbody id="cart-body">
+            <tr id="cart-empty"><td colspan="5" class="text-muted" style="text-align:center;padding:24px;">No items added yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-4 text-right">
+        <button class="btn btn-primary" id="next-to-2" disabled onclick="goToStep(2)">Next: Request Details</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ STEP 2: Request Details ═══════════════ -->
+  <div id="step-2" class="step-content hidden">
+    <div class="page-header">
+      <h1>Shipping &amp; Delivery</h1>
+      <p>Tell us where to ship and when you need it.</p>
+    </div>
+
+    <div class="card">
+      <h2>Shipping Information</h2>
+      <div class="form-row">
+        <div>
+          <label>Province</label>
+          <select id="province-select">
+            <option value="">Select province...</option>
+            <option value="ON">Ontario</option>
+            <option value="QC">Quebec</option>
+            <option value="BC">British Columbia</option>
+            <option value="AB">Alberta</option>
+            <option value="MB">Manitoba</option>
+            <option value="SK">Saskatchewan</option>
+            <option value="NS">Nova Scotia</option>
+            <option value="NB">New Brunswick</option>
+            <option value="NL">Newfoundland &amp; Labrador</option>
+            <option value="PE">Prince Edward Island</option>
+            <option value="NT">Northwest Territories</option>
+            <option value="NU">Nunavut</option>
+            <option value="YT">Yukon</option>
+          </select>
+        </div>
+        <div>
+          <label>Postal Code</label>
+          <input type="text" id="postal-code" placeholder="M5V 3L9" maxlength="7">
+        </div>
+        <div>
+          <label>Desired Delivery Date</label>
+          <input type="date" id="delivery-date">
+        </div>
+      </div>
+      <div>
+        <label>Notes for Vendors (optional)</label>
+        <textarea id="notes" rows="3" placeholder="Special requirements, packaging, etc."></textarea>
+      </div>
+    </div>
+
+    <div class="flex justify-between mt-4">
+      <button class="btn btn-outline" onclick="goToStep(1)">Back</button>
+      <button class="btn btn-primary" id="next-to-3" onclick="goToStep(3)">Next: Review</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ STEP 3: Review & Submit ═══════════════ -->
+  <div id="step-3" class="step-content hidden">
+    <div class="page-header">
+      <h1>Review Your Quote Request</h1>
+      <p>Confirm details before sending to vendors.</p>
+    </div>
+
+    <div class="card">
+      <h2>Items</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ASIN</th><th>Product</th><th>Qty</th><th>Target Price</th></tr></thead>
+          <tbody id="review-items"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Shipping Details</h2>
+      <div id="review-shipping"></div>
+    </div>
+
+    <div class="flex justify-between mt-4">
+      <button class="btn btn-outline" onclick="goToStep(2)">Back</button>
+      <button class="btn btn-success" onclick="submitQuote()">Submit Quote Request</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ STEP 4: Compare Quotes ═══════════════ -->
+  <div id="step-4" class="step-content hidden">
+    <div class="page-header">
+      <h1>Vendor Quote Comparison</h1>
+      <p>Quotes received — sorted by total cost including Canadian taxes.</p>
+    </div>
+
+    <div id="comparison-area"></div>
+
+    <div class="mt-4">
+      <button class="btn btn-outline" onclick="resetQuote()">Start New Quote</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

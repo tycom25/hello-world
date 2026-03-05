@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vendor Portal — Quote Engine</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<div class="navbar">
+  <div class="logo">
+    Amazon Business <span class="ca">Canada</span> — Quote Engine
+  </div>
+  <nav>
+    <a href="index.html">Customer</a>
+    <a href="vendor.html" class="active">Vendor Portal</a>
+  </nav>
+</div>
+
+<div class="container">
+
+  <div class="page-header">
+    <h1>Vendor Portal</h1>
+    <p>Respond to incoming quote requests from Amazon Business Canada buyers.</p>
+  </div>
+
+  <!-- Vendor selector (demo) -->
+  <div class="card">
+    <h2>Select Your Vendor Account</h2>
+    <div class="form-row">
+      <div>
+        <label>Vendor</label>
+        <select id="vendor-select" onchange="loadVendorQuotes()">
+          <option value="">Choose vendor...</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending RFQs -->
+  <div id="vendor-rfqs" class="hidden">
+    <div class="card">
+      <div class="flex justify-between items-center mb-2">
+        <h2>Pending Quote Requests</h2>
+        <span class="badge badge-open" id="pending-count">0 pending</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Quote ID</th>
+              <th>ASIN</th>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Target Price</th>
+              <th>Ship To</th>
+              <th>Delivery By</th>
+              <th>Your Price</th>
+              <th>Lead Time</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="rfq-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Discount tiers -->
+    <div class="card">
+      <h2>Your Volume Discount Tiers</h2>
+      <p class="text-sm text-muted mb-4">Pre-configure discounts so quotes can be auto-generated for buyers.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ASIN</th><th>Min Qty</th><th>Discount %</th><th></th></tr></thead>
+          <tbody id="tiers-body"></tbody>
+        </table>
+      </div>
+      <div class="mt-4">
+        <h2 class="mb-2">Add Discount Tier</h2>
+        <div class="form-row">
+          <div><label>ASIN</label><input type="text" id="tier-asin" placeholder="B09V3KXJPB" maxlength="10"></div>
+          <div><label>Min Quantity</label><input type="number" id="tier-min-qty" placeholder="100" min="1"></div>
+          <div><label>Discount %</label><input type="number" id="tier-discount" placeholder="15" min="0.01" max="100" step="0.01"></div>
+          <div style="display:flex;align-items:flex-end">
+            <button class="btn btn-primary" onclick="addTier()">Add Tier</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submitted quotes -->
+    <div class="card">
+      <h2>Your Submitted Quotes</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Quote ID</th><th>ASIN</th><th>Your Price</th><th>Lead Time</th><th>Status</th></tr></thead>
+          <tbody id="submitted-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div id="vendor-empty" class="card">
+    <div class="empty-state">
+      <div class="icon">&#128230;</div>
+      <p>Select a vendor account above to view pending quote requests.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script src="vendor-app.js"></script>
+</body>
+</html>
